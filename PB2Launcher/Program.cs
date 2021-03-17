@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Buffers.Text;
 using System.IO;
 using System.Net;
 using System.Diagnostics;
 using System.Collections.Generic;
+using System.Text;
 
 namespace PB2Launcher {
     internal static class Program {
@@ -14,7 +16,7 @@ namespace PB2Launcher {
             Console.Title = defaultTitle;
 
             if (platform == Platform.Unknown) {
-                Console.WriteLine("[-] unknown platform, cannot proceed!");
+                Logger.Error("unknown platform, cannot proceed!");
 
                 return;
             }
@@ -47,14 +49,54 @@ namespace PB2Launcher {
                 DownloadFile(defaultTitle, _swfDownload, filename);
             }
 
+            filename = Path.Join(AppContext.BaseDirectory, "sentry");
+
+            string username;
+            string password;
+
+            while (true) {
+                if (!File.Exists(filename)) {
+                    Logger.Log("username: ", false);
+
+                    username = Console.ReadLine();
+
+                    Logger.Log("password: ", false);
+
+                    password = Console.ReadLine();
+
+                    if (username is null || password is null)
+                        continue;
+                    
+                    File.WriteAllText(filename, $"{Convert.ToBase64String(Encoding.UTF8.GetBytes(username))}:{Convert.ToBase64String(Encoding.UTF8.GetBytes(password))}");
+
+                    break;
+                }
+
+                var sentry = File.ReadAllText(filename);
+
+                var items = sentry.Split(':');
+
+                if (items.Length != 2) {
+                    Logger.Error("invalid sentry file!");
+
+                    continue;
+                }
+
+                username = Encoding.UTF8.GetString(Convert.FromBase64String(items[0]));
+                password = Encoding.UTF8.GetString(Convert.FromBase64String(items[1]));
+
+                break;
+            }
+
             Logger.Log("starting PB2 :D");
+            Logger.Log("*** if login is invalid please delete the sentry file!***");
 
             try {
                 if (platform == Platform.Linux) {
                     Process.Start("chmod", $"+x {flash}");
                 }
                 
-                Process.Start(flash, swf);
+                Process.Start(flash, $"{swf}?l={username}&p={password}");
             }
             catch (Exception exception) {
                 Logger.Error(exception.ToString());
