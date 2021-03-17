@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Buffers.Text;
 using System.IO;
 using System.Net;
+using System.Text;
 using System.Diagnostics;
 using System.Collections.Generic;
-using System.Text;
 
 namespace PB2Launcher {
     internal static class Program {
@@ -89,7 +88,7 @@ namespace PB2Launcher {
             }
 
             Logger.Log("starting PB2 :D");
-            Logger.Log("*** if login is invalid please delete the sentry file!***");
+            Logger.Log("*** if login is invalid please delete the sentry file! ***");
 
             try {
                 if (platform == Platform.Linux) {
